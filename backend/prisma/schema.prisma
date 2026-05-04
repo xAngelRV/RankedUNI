@@ -1,0 +1,39 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ESTANDAR
+  PREMIUM
+  ADMIN
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  supabase_uid String   @unique
+  username     String   @unique
+  first_name   String
+  last_name    String
+  email        String   @unique
+  elo_rating   Int      @default(0)
+  role         Role     @default(ESTANDAR)
+}
+
+model Question {
+  id                     Int      @id @default(autoincrement())
+  subject                String
+  image_url              String
+  correct_answer         String
+  estimated_time_seconds Int
+}
+
+model Match {
+  id        Int      @id @default(autoincrement())
+  status    String   // "waiting", "active", "finished"
+  winner_id Int?
+}
