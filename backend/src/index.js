@@ -65,7 +65,7 @@ app.get('/api/users/check-nickname/:nickname', async (req, res) => {
 app.post('/api/users/sync', async (req, res) => {
   try {
     const { supabase_uid, username, first_name, last_name, email } = req.body;
-    
+
     // Verificar si ya existe el uid para evitar duplicados
     const existing = await prisma.user.findUnique({ where: { supabase_uid } });
     if (existing) return res.status(400).json({ error: 'User already synced' });
@@ -115,7 +115,7 @@ app.put('/api/admin/users/:id/role', async (req, res) => {
   try {
     const { role } = req.body;
     const userId = parseInt(req.params.id, 10);
-    
+
     if (!['ESTANDAR', 'PREMIUM', 'ADMIN'].includes(role)) {
       return res.status(400).json({ error: 'Invalid role' });
     }
@@ -144,9 +144,9 @@ const io = new Server(server, {
 });
 
 const GAME_MODES = {
-  ranked:  { maxRounds: 3, timer: 120, requirePremium: false, useAI: false },
-  blitz:   { maxRounds: 1, timer: 60,  requirePremium: false, useAI: false },
-  premium: { maxRounds: 3, timer: 90,  requirePremium: true,  useAI: true }
+  ranked: { maxRounds: 3, timer: 120, requirePremium: false, useAI: false },
+  blitz: { maxRounds: 1, timer: 60, requirePremium: false, useAI: false },
+  premium: { maxRounds: 3, timer: 90, requirePremium: true, useAI: true }
 };
 
 // Variables en memoria para el matchmaking (MVP)
@@ -174,11 +174,11 @@ io.on('connection', (socket) => {
     // Si ya hay alguien esperando, los emparejamos
     if (queues[queueName].length > 0) {
       const opponent = queues[queueName].pop();
-      
+
       // Creamos una sala única para estos dos jugadores
       const roomName = `match_${opponent.socketId}_${socket.id}`;
       socket.join(roomName);
-      
+
       // El oponente ya estaba conectado, lo metemos a la sala
       const opponentSocket = io.sockets.sockets.get(opponent.socketId);
       if (opponentSocket) {
@@ -201,7 +201,7 @@ io.on('connection', (socket) => {
         };
       } else {
         try {
-          const whereClause = modeId === 'blitz' ? {} : { 
+          const whereClause = modeId === 'blitz' ? {} : {
             OR: [
               { course: topic },
               { category: topic }
@@ -228,7 +228,7 @@ io.on('connection', (socket) => {
           eloDifficulty: 1200
         };
       }
-      
+
       question.estimated_time_seconds = modeConfig.timer;
 
       // Guardar el estado de la partida
@@ -255,7 +255,7 @@ io.on('connection', (socket) => {
         currentRound: 1,
         timer: modeConfig.timer
       });
-      
+
     } else {
       // Si no hay nadie, este jugador espera
       queues[queueName].push({ ...userData, socketId: socket.id });
@@ -275,20 +275,20 @@ io.on('connection', (socket) => {
 
     // Verificar si ambos respondieron (o si es Muerte Súbita, si alguien se equivocó/acertó)
     const opponent = match.players.find(p => p.socketId !== socket.id);
-    
+
     if (match.modeId === 'blitz') {
       // Duelo rápido: Muerte súbita mejorada
       const isCorrect = answer !== null && answer === (match.question.correctOption || match.question.correct_answer);
       const estimatedTime = match.question.estimated_time_seconds || 60;
       const timeTaken = estimatedTime - timeRemaining;
-      
+
       if (isCorrect) {
         // Gana inmediatamente
         player.score = 1;
         const aiExplanation = await generateEditorial(match.question.imageUrl || match.question.image_url, match.question.correctOption || match.question.correct_answer);
-        
-        io.to(roomName).emit('match_end', { 
-          winner: player.socketId, 
+
+        io.to(roomName).emit('match_end', {
+          winner: player.socketId,
           match,
           correctAnswer: match.question.correctOption || match.question.correct_answer,
           timeTaken,
@@ -305,9 +305,9 @@ io.on('connection', (socket) => {
           // El rival también había respondido (y obligatoriamente mal, porque si hubiera respondido bien ya habría ganado y la sala se habría borrado)
           // Empate
           const aiExplanation = await generateEditorial(match.question.imageUrl || match.question.image_url, match.question.correctOption || match.question.correct_answer);
-          
-          io.to(roomName).emit('match_end', { 
-            winner: 'tie', 
+
+          io.to(roomName).emit('match_end', {
+            winner: 'tie',
             match,
             correctAnswer: match.question.correctOption || match.question.correct_answer,
             timeTaken,
@@ -368,10 +368,10 @@ io.on('connection', (socket) => {
           const aiExplanation = await generateEditorial(match.question.imageUrl || match.question.image_url, match.question.correctOption || match.question.correct_answer);
 
           setTimeout(() => {
-            io.to(roomName).emit('match_end', { 
-              winner: matchWinner, 
+            io.to(roomName).emit('match_end', {
+              winner: matchWinner,
               match,
-              aiExplanation 
+              aiExplanation
             });
             delete activeMatches[roomName];
           }, 3000);
@@ -380,7 +380,7 @@ io.on('connection', (socket) => {
           match.currentRound += 1;
           player.answer = null;
           opponent.answer = null;
-          
+
           setTimeout(async () => {
             let nextQuestion;
             if (GAME_MODES[match.modeId]?.useAI) {
