@@ -138,8 +138,14 @@ const io = new Server(server, {
   }
 });
 
+const GAME_MODES = {
+  ranked:  { maxRounds: 3, timer: 120, requirePremium: false, useAI: false },
+  blitz:   { maxRounds: 1, timer: 60,  requirePremium: false, useAI: false },
+  premium: { maxRounds: 3, timer: 90,  requirePremium: true,  useAI: true }
+};
+
 // Variables en memoria para el matchmaking (MVP)
-let queues = { global: [], Física: [], Aritmética: [] };
+let queues = {};
 let activeMatches = {}; // roomName -> matchState
 
 io.on('connection', (socket) => {
@@ -148,13 +154,21 @@ io.on('connection', (socket) => {
   // Evento para buscar partida
   socket.on('find_match', async (userData) => {
     console.log(`Usuario ${userData?.username || socket.id} buscando partida...`);
-    const gameMode = userData.gameMode || 'global';
-    
-    if (!queues[gameMode]) queues[gameMode] = [];
+    const modeId = userData.modeId || 'blitz';
+    const topic = userData.topic || 'Aptitud Académica';
+    const modeConfig = GAME_MODES[modeId] || GAME_MODES.ranked;
+
+    if (modeConfig.requirePremium && userData.role !== 'PREMIUM') {
+      socket.emit('auth_error', { message: 'Esta modalidad requiere una suscripción PREMIUM.' });
+      return;
+    }
+
+    const queueName = `${modeId}_${topic}`;
+    if (!queues[queueName]) queues[queueName] = [];
 
     // Si ya hay alguien esperando, los emparejamos
-    if (queues[gameMode].length > 0) {
-      const opponent = queues[gameMode].pop();
+    if (queues[queueName].length > 0) {
+      const opponent = queues[queueName].pop();
       
       // Creamos una sala única para estos dos jugadores
       const roomName = `match_${opponent.socketId}_${socket.id}`;
@@ -168,40 +182,56 @@ io.on('connection', (socket) => {
 
       console.log(`Partida encontrada! Sala: ${roomName}`);
 
-      // Obtener una pregunta aleatoria de la BD
+      // Obtener pregunta
       let question;
-      try {
-        const whereClause = gameMode === 'global' ? {} : { subject: gameMode };
-        const questionsCount = await prisma.question.count({ where: whereClause });
-        if (questionsCount > 0) {
-          const skip = Math.floor(Math.random() * questionsCount);
-          question = await prisma.question.findFirst({ where: whereClause, skip });
-        } else if (gameMode !== 'global') {
-          const fallbackCount = await prisma.question.count();
-          if (fallbackCount > 0) {
-             const skip = Math.floor(Math.random() * fallbackCount);
-             question = await prisma.question.findFirst({ skip });
+      if (modeConfig.useAI) {
+        // MOCK LLM
+        question = {
+          id: 'premium-mock-' + Date.now(),
+          statement: "Resuelve la siguiente ecuación: $2x + 5 = 15$",
+          options: ["2", "5", "10", "15", "20"],
+          correctOption: "5",
+          course: "Álgebra Inédita",
+          estimated_time_seconds: modeConfig.timer
+        };
+      } else {
+        try {
+          const whereClause = modeId === 'blitz' ? {} : { 
+            OR: [
+              { course: topic },
+              { category: topic }
+            ]
+          };
+          const questionsCount = await prisma.question.count({ where: whereClause });
+          if (questionsCount > 0) {
+            const skip = Math.floor(Math.random() * questionsCount);
+            question = await prisma.question.findFirst({ where: whereClause, skip });
           }
+        } catch (e) {
+          console.error("Error al obtener la pregunta de la BD:", e);
         }
-      } catch (e) {
-        console.error("Error al obtener la pregunta de la BD:", e);
       }
 
       if (!question) {
         question = {
-          id: 1,
-          subject: 'Matemáticas',
-          image_url: 'https://via.placeholder.com/600x400?text=Problema+Matematico',
-          correct_answer: 'C',
-          estimated_time_seconds: 60
+          id: 'fallback-1',
+          category: 'Matemática',
+          course: 'Álgebra',
+          statement: 'Resuelve la siguiente ecuación: $2x + 5 = 15$. ¿Cuál es el valor de $x$?',
+          options: ['2', '3', '5', '10', '15'],
+          correctOption: '5',
+          eloDifficulty: 1200
         };
       }
+      
+      question.estimated_time_seconds = modeConfig.timer;
 
       // Guardar el estado de la partida
       activeMatches[roomName] = {
         roomName,
-        mode: gameMode,
-        maxRounds: gameMode === 'global' ? 1 : 3,
+        modeId,
+        topic,
+        maxRounds: modeConfig.maxRounds,
         currentRound: 1,
         question: question,
         players: [
@@ -215,14 +245,15 @@ io.on('connection', (socket) => {
         room: roomName,
         players: [opponent, { ...userData, socketId: socket.id }],
         question: question,
-        mode: gameMode,
+        mode: modeId,
         maxRounds: activeMatches[roomName].maxRounds,
-        currentRound: 1
+        currentRound: 1,
+        timer: modeConfig.timer
       });
       
     } else {
       // Si no hay nadie, este jugador espera
-      queues[gameMode].push({ ...userData, socketId: socket.id });
+      queues[queueName].push({ ...userData, socketId: socket.id });
       socket.emit('waiting_for_match');
     }
   });
@@ -240,20 +271,21 @@ io.on('connection', (socket) => {
     // Verificar si ambos respondieron (o si es Muerte Súbita, si alguien se equivocó/acertó)
     const opponent = match.players.find(p => p.socketId !== socket.id);
     
-    if (match.mode === 'global') {
-      // Duelo rápido: Muerte súbita
-      const isCorrect = answer === match.question.correct_answer;
-      const timeTaken = match.question.estimated_time_seconds - timeRemaining;
+    if (match.modeId === 'blitz') {
+      // Duelo rápido: Muerte súbita mejorada
+      const isCorrect = answer !== null && answer === (match.question.correctOption || match.question.correct_answer);
+      const estimatedTime = match.question.estimated_time_seconds || 60;
+      const timeTaken = estimatedTime - timeRemaining;
       
       if (isCorrect) {
+        // Gana inmediatamente
         player.score = 1;
-        // Simulación: Generar editorial si al menos un usuario es Premium (aquí lo generamos siempre para probar)
-        const aiExplanation = await generateEditorial(match.question.image_url, match.question.correct_answer);
+        const aiExplanation = await generateEditorial(match.question.imageUrl || match.question.image_url, match.question.correctOption || match.question.correct_answer);
         
         io.to(roomName).emit('match_end', { 
           winner: player.socketId, 
           match,
-          correctAnswer: match.question.correct_answer,
+          correctAnswer: match.question.correctOption || match.question.correct_answer,
           timeTaken,
           aiExplanation,
           results: {
@@ -263,29 +295,36 @@ io.on('connection', (socket) => {
         });
         delete activeMatches[roomName];
       } else {
-        // Pierde instantáneamente
-        opponent.score = 1;
-        const aiExplanation = await generateEditorial(match.question.image_url, match.question.correct_answer);
-        
-        io.to(roomName).emit('match_end', { 
-          winner: opponent.socketId, 
-          match,
-          correctAnswer: match.question.correct_answer,
-          timeTaken,
-          aiExplanation,
-          results: {
-            [player.socketId]: { eloChange: -12, reason: 'Te equivocaste de respuesta' },
-            [opponent.socketId]: { eloChange: 15, reason: 'Tu oponente se equivocó' }
-          }
-        });
-        delete activeMatches[roomName];
+        // Respondió mal o se le acabó el tiempo
+        if (opponent.answer !== null) {
+          // El rival también había respondido (y obligatoriamente mal, porque si hubiera respondido bien ya habría ganado y la sala se habría borrado)
+          // Empate
+          const aiExplanation = await generateEditorial(match.question.imageUrl || match.question.image_url, match.question.correctOption || match.question.correct_answer);
+          
+          io.to(roomName).emit('match_end', { 
+            winner: 'tie', 
+            match,
+            correctAnswer: match.question.correctOption || match.question.correct_answer,
+            timeTaken,
+            aiExplanation,
+            results: {
+              [player.socketId]: { eloChange: 0, reason: 'Ambos respondieron incorrectamente' },
+              [opponent.socketId]: { eloChange: 0, reason: 'Ambos respondieron incorrectamente' }
+            }
+          });
+          delete activeMatches[roomName];
+        } else {
+          // El rival todavía no responde
+          io.to(player.socketId).emit('lock_screen', { message: 'Respuesta incorrecta. Esperando al rival...' });
+          io.to(opponent.socketId).emit('opponent_failed', { message: 'Tu rival se equivocó. ¡Aprovecha tu tiempo!' });
+        }
       }
     } else {
       // Mejor de 3 (Ranked por áreas)
       if (player.answer !== null && opponent.answer !== null) {
         // Ambos respondieron
-        const p1Correct = player.answer === match.question.correct_answer;
-        const p2Correct = opponent.answer === match.question.correct_answer;
+        const p1Correct = player.answer === (match.question.correctOption || match.question.correct_answer);
+        const p2Correct = opponent.answer === (match.question.correctOption || match.question.correct_answer);
 
         let roundWinner = null;
         if (p1Correct && !p2Correct) {
@@ -321,7 +360,7 @@ io.on('connection', (socket) => {
           else if (opponent.score > player.score) matchWinner = opponent.socketId;
           else matchWinner = 'tie';
 
-          const aiExplanation = await generateEditorial(match.question.image_url, match.question.correct_answer);
+          const aiExplanation = await generateEditorial(match.question.imageUrl || match.question.image_url, match.question.correctOption || match.question.correct_answer);
 
           setTimeout(() => {
             io.to(roomName).emit('match_end', { 
@@ -339,20 +378,37 @@ io.on('connection', (socket) => {
           
           setTimeout(async () => {
             let nextQuestion;
-            try {
-              const whereClause = { subject: match.mode };
-              const qCount = await prisma.question.count({ where: whereClause });
-              if (qCount > 0) {
-                const skip = Math.floor(Math.random() * qCount);
-                nextQuestion = await prisma.question.findFirst({ where: whereClause, skip });
+            if (GAME_MODES[match.modeId]?.useAI) {
+              nextQuestion = {
+                id: 'premium-mock-' + Date.now(),
+                statement: "Resuelve la siguiente ecuación: $2x + 5 = 15$",
+                options: ["2", "5", "10", "15", "20"],
+                correctOption: "5",
+                course: "Álgebra Inédita",
+                estimated_time_seconds: GAME_MODES[match.modeId].timer
+              };
+            } else {
+              try {
+                const whereClause = {
+                  OR: [
+                    { course: match.topic },
+                    { category: match.topic }
+                  ]
+                };
+                const qCount = await prisma.question.count({ where: whereClause });
+                if (qCount > 0) {
+                  const skip = Math.floor(Math.random() * qCount);
+                  nextQuestion = await prisma.question.findFirst({ where: whereClause, skip });
+                }
+              } catch (e) {
+                console.error(e);
               }
-            } catch (e) {
-              console.error(e);
             }
             if (!nextQuestion) nextQuestion = match.question; // fallback
+            nextQuestion.estimated_time_seconds = GAME_MODES[match.modeId]?.timer || 60;
             match.question = nextQuestion;
 
-            io.to(roomName).emit('next_round', { currentRound: match.currentRound, question: nextQuestion });
+            io.to(roomName).emit('next_round', { currentRound: match.currentRound, question: nextQuestion, timer: nextQuestion.estimated_time_seconds });
           }, 3000);
         }
       }

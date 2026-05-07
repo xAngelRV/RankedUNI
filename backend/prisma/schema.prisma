@@ -25,11 +25,15 @@ model User {
 }
 
 model Question {
-  id                     Int      @id @default(autoincrement())
-  subject                String
-  image_url              String
-  correct_answer         String
-  estimated_time_seconds Int
+  id            String   @id @default(uuid())
+  category      String   // ej. 'Aptitud Académica', 'Matemática', 'Ciencias'
+  course        String   // ej. 'Álgebra', 'Física', 'Razonamiento Matemático'
+  statement     String   // El texto de la pregunta (soportará LaTeX en el frontend)
+  imageUrl      String?  // Opcional: Solo si la pregunta requiere un gráfico/circuito
+  options       Json     // Un array de strings con las 5 alternativas: ['2', '4', '8', '16', '32']
+  correctOption String   // La respuesta correcta exacta que coincida con un elemento del array
+  eloDifficulty Int      @default(1200) // Para el futuro: ELO dinámico de la pregunta
+  createdAt     DateTime @default(now())
 }
 
 model Match {
