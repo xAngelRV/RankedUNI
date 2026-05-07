@@ -4,13 +4,14 @@ import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 
 export default function Dashboard({ user, onFindMatch }) {
-  const [modality, setModality] = useState('global');
+  const [modality, setModality] = useState('blitz');
   const [area, setArea] = useState('Matemática');
   const navigate = useNavigate();
 
   const handleStart = () => {
-    if (modality === 'global') onFindMatch('Aptitud Académica'); // Mapeamos global a Aptitud para el MVP
-    else if (modality === 'ranked') onFindMatch(area);
+    if (modality === 'blitz') onFindMatch({ modeId: 'blitz', topic: 'Aptitud Académica' });
+    else if (modality === 'ranked') onFindMatch({ modeId: 'ranked', topic: area });
+    else if (modality === 'premium') onFindMatch({ modeId: 'premium', topic: 'IA_Gen' });
     else alert('Simulación General próximamente disponible.');
   };
 
@@ -109,8 +110,9 @@ export default function Dashboard({ user, onFindMatch }) {
                 onChange={(e) => setModality(e.target.value)}
                 className="w-full bg-brand-dark border border-brand-blue/50 rounded-lg p-3 text-white focus:outline-none focus:border-brand-gold transition-colors"
               >
-                <option value="global">⚡ Aptitud Académica (Duelo Rápido)</option>
+                <option value="blitz">⚡ Blitz (Speed Run RM/RV)</option>
                 <option value="ranked">🎯 Ranked por Áreas (Mejor de 3)</option>
+                <option value="premium">✨ Arena Premium (IA Inédita)</option>
                 <option value="simulacion">📚 Simulación General (Próximamente)</option>
               </select>
             </div>

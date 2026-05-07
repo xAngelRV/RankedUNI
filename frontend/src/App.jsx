@@ -127,6 +127,22 @@ function GameApp({ session }) {
       setShowAI(false);
     });
 
+    socket.on('lock_screen', (data) => {
+      setMatchData(prev => ({
+        ...prev,
+        isLocked: true,
+        lockMessage: data.message
+      }));
+    });
+
+    socket.on('opponent_failed', (data) => {
+      setMatchData(prev => ({
+        ...prev,
+        opponentFailed: true,
+        opponentFailedMessage: data.message
+      }));
+    });
+
     return () => {
       socket.off('connect');
       socket.off('waiting_for_match');
@@ -134,13 +150,23 @@ function GameApp({ session }) {
       socket.off('round_result');
       socket.off('next_round');
       socket.off('match_end');
+      socket.off('lock_screen');
+      socket.off('opponent_failed');
     };
   }, [user]);
 
-  const handleFindMatch = (gameMode) => {
-    socket.emit('find_match', { ...user, gameMode });
+  const handleFindMatch = (payload) => {
+    socket.emit('find_match', { ...user, modeId: payload.modeId, topic: payload.topic });
     setAppState('waiting');
   };
+
+  useEffect(() => {
+    socket.on('auth_error', (data) => {
+      alert(data.message);
+      setAppState('dashboard');
+    });
+    return () => socket.off('auth_error');
+  }, []);
 
   const handleAnswerSubmit = (answer, timeRemaining) => {
     socket.emit('submit_answer', {

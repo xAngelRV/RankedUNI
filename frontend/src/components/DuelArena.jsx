@@ -3,13 +3,23 @@ import { Timer, ShieldAlert } from 'lucide-react';
 import AntiCheatCanvas from './AntiCheatCanvas';
 
 export default function DuelArena({ matchData, onAnswerSubmit, currentSocketId }) {
-  const { question, opponent, currentRound, maxRounds, showRoundResult, roundWinner, scores } = matchData;
-  const [timeLeft, setTimeLeft] = useState(question.estimated_time_seconds);
+  const { question, opponent, currentRound, maxRounds, showRoundResult, roundWinner, scores, isLocked, lockMessage, opponentFailed, opponentFailedMessage } = matchData;
+  const [currentQuestion, setCurrentQuestion] = useState(null);
+  const [timeLeft, setTimeLeft] = useState(60);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
 
   useEffect(() => {
+    if (question) {
+      setCurrentQuestion(question);
+      setTimeLeft(question.estimated_time_seconds || 60);
+    }
+  }, [question]);
+
+  useEffect(() => {
     // Reset state for new round
-    setTimeLeft(question.estimated_time_seconds);
+    if (question) {
+      setTimeLeft(question.estimated_time_seconds || 60);
+    }
     setSelectedAnswer(null);
   }, [currentRound, question]);
 
@@ -34,7 +44,18 @@ export default function DuelArena({ matchData, onAnswerSubmit, currentSocketId }
     onAnswerSubmit(option, timeLeft);
   };
 
-  const options = ['A', 'B', 'C', 'D', 'E'];
+  const options = currentQuestion?.options || ['A', 'B', 'C', 'D', 'E'];
+
+  if (!currentQuestion) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-brand-dark text-white">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-brand-blue border-t-brand-gold rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="text-xl font-bold">Cargando pregunta...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen p-6 flex flex-col items-center bg-brand-dark">
@@ -72,12 +93,33 @@ export default function DuelArena({ matchData, onAnswerSubmit, currentSocketId }
         </div>
       </div>
 
+      {opponentFailed && (
+        <div className="w-full max-w-4xl mb-4 bg-green-500/20 border border-green-500/50 text-green-400 p-4 rounded-lg flex items-center justify-center animate-pulse shadow-[0_0_15px_rgba(34,197,94,0.3)]">
+          <span className="font-bold text-lg">✨ {opponentFailedMessage} ✨</span>
+        </div>
+      )}
+
       {/* Question Canvas Container */}
-      <div className="w-full max-w-4xl mb-8 relative">
+      <div className="w-full max-w-4xl mb-8 relative flex flex-col items-center">
         <div className="absolute -top-3 left-4 bg-brand-dark px-2 text-xs font-bold text-brand-gold uppercase tracking-widest z-10 flex items-center gap-1">
           <ShieldAlert size={14} /> Sistema Anti-Cheat Activo
         </div>
-        <AntiCheatCanvas imageUrl={question.image_url} />
+        
+        <div className="w-full bg-brand-darker border border-brand-blue/30 rounded-lg p-8 shadow-inner min-h-[300px] flex flex-col items-center justify-center text-center">
+          {currentQuestion?.statement && (
+            <h2 className="text-2xl text-white font-medium mb-6">{currentQuestion.statement}</h2>
+          )}
+          {currentQuestion?.imageUrl || currentQuestion?.image_url ? (
+            <img 
+              src={currentQuestion.imageUrl || currentQuestion.image_url} 
+              alt="Pregunta de Admisión" 
+              crossOrigin="anonymous"
+              className="max-h-full max-w-full object-contain rounded-lg"
+            />
+          ) : !currentQuestion?.statement ? (
+            <p className="text-white">Cargando imagen o formato no soportado...</p>
+          ) : null}
+        </div>
 
         {/* Overlay for Waiting / Round Result */}
         {(selectedAnswer || showRoundResult) && (
@@ -95,6 +137,12 @@ export default function DuelArena({ matchData, onAnswerSubmit, currentSocketId }
                 </h3>
                 <p className="text-brand-gold font-bold">Preparando siguiente pregunta...</p>
               </div>
+            ) : isLocked ? (
+              <div className="text-center">
+                <div className="w-12 h-12 border-4 border-red-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <h3 className="text-2xl font-bold text-red-500">Respuesta Incorrecta</h3>
+                <p className="text-gray-300">{lockMessage || 'Esperando al oponente...'}</p>
+              </div>
             ) : (
               <div className="text-center">
                 <div className="w-12 h-12 border-4 border-brand-blue border-t-brand-gold rounded-full animate-spin mx-auto mb-4"></div>
@@ -108,22 +156,37 @@ export default function DuelArena({ matchData, onAnswerSubmit, currentSocketId }
 
       {/* Answer Buttons */}
       <div className="w-full max-w-2xl grid grid-cols-5 gap-4">
-        {options.map((opt) => (
-          <button
-            key={opt}
-            disabled={!!selectedAnswer}
-            onClick={() => handleAnswerClick(opt)}
-            className={`
-              py-4 rounded-lg text-2xl font-bold transition-all duration-200 transform
-              ${selectedAnswer === opt 
-                ? 'bg-brand-gold text-brand-dark scale-95' 
-                : 'bg-brand-darker text-white border border-brand-blue/40 hover:bg-brand-blue/20 hover:-translate-y-1 hover:shadow-[0_5px_15px_rgba(26,54,93,0.5)]'}
-              ${selectedAnswer && selectedAnswer !== opt ? 'opacity-50 cursor-not-allowed' : ''}
-            `}
-          >
-            {opt}
-          </button>
-        ))}
+        {options.map((opt) => {
+          let buttonClass = "py-4 rounded-lg text-2xl font-bold transition-all duration-200 transform ";
+          
+          if (!selectedAnswer) {
+            buttonClass += "bg-brand-darker text-white border border-brand-blue/40 hover:bg-brand-blue/20 hover:-translate-y-1 hover:shadow-[0_5px_15px_rgba(26,54,93,0.5)]";
+          } else {
+            const isCorrect = opt === (currentQuestion?.correctOption || currentQuestion?.correct_answer);
+            if (selectedAnswer === opt) {
+              if (isCorrect) {
+                buttonClass += "bg-green-500 text-white scale-95 border border-green-400 shadow-[0_0_15px_rgba(34,197,94,0.5)]";
+              } else {
+                buttonClass += "bg-red-500 text-white scale-95 border border-red-400 shadow-[0_0_15px_rgba(239,68,68,0.5)]";
+              }
+            } else if (isCorrect) {
+              buttonClass += "bg-green-500/50 text-white border border-green-400 opacity-80";
+            } else {
+              buttonClass += "bg-brand-darker text-white border border-brand-blue/40 opacity-50 cursor-not-allowed";
+            }
+          }
+
+          return (
+            <button
+              key={opt}
+              disabled={!!selectedAnswer}
+              onClick={() => handleAnswerClick(opt)}
+              className={buttonClass}
+            >
+              {opt}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
