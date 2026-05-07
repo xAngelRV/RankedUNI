@@ -106,9 +106,6 @@ export default function DuelArena({ matchData, onAnswerSubmit, currentSocketId }
         </div>
         
         <div className="w-full bg-brand-darker border border-brand-blue/30 rounded-lg p-8 shadow-inner min-h-[300px] flex flex-col items-center justify-center text-center">
-          {currentQuestion?.statement && (
-            <h2 className="text-2xl text-white font-medium mb-6">{currentQuestion.statement}</h2>
-          )}
           {currentQuestion?.imageUrl || currentQuestion?.image_url ? (
             <img 
               src={currentQuestion.imageUrl || currentQuestion.image_url} 
@@ -116,9 +113,9 @@ export default function DuelArena({ matchData, onAnswerSubmit, currentSocketId }
               crossOrigin="anonymous"
               className="max-h-full max-w-full object-contain rounded-lg"
             />
-          ) : !currentQuestion?.statement ? (
-            <p className="text-white">Cargando imagen o formato no soportado...</p>
-          ) : null}
+          ) : (
+            <p className="text-2xl text-white font-medium mb-6">{currentQuestion?.statement}</p>
+          )}
         </div>
 
         {/* Overlay for Waiting / Round Result */}

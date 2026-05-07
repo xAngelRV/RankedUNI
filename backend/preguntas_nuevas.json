@@ -1,0 +1,347 @@
+[
+    {
+        "curso": "RM",
+        "archivo": "RM_21-1_01",
+        "clave": "B"
+    },
+    {
+        "curso": "RM",
+        "archivo": "RM_21-1_02",
+        "clave": "B"
+    },
+    {
+        "curso": "RM",
+        "archivo": "RM_21-1_04",
+        "clave": "A"
+    },
+    {
+        "curso": "RM",
+        "archivo": "RM_21-1_05",
+        "clave": "A"
+    },
+    {
+        "curso": "RM",
+        "archivo": "RM_21-1_06",
+        "clave": "A"
+    },
+    {
+        "curso": "RM",
+        "archivo": "RM_21-1_07",
+        "clave": "B"
+    },
+    {
+        "curso": "RM",
+        "archivo": "RM_21-1_08",
+        "clave": "C"
+    },
+    {
+        "curso": "RM",
+        "archivo": "RM_21-1_09",
+        "clave": "E"
+    },
+    {
+        "curso": "RM",
+        "archivo": "RM_21-1_10",
+        "clave": "B"
+    },
+    {
+        "curso": "RM",
+        "archivo": "RM_21-1_11",
+        "clave": "D"
+    },
+    {
+        "curso": "RM",
+        "archivo": "RM_21-1_12",
+        "clave": "E"
+    },
+    {
+        "curso": "RV",
+        "archivo": "RV_21-1_13",
+        "clave": "B"
+    },
+    {
+        "curso": "RV",
+        "archivo": "RV_21-1_15",
+        "clave": "A"
+    },
+    {
+        "curso": "RV",
+        "archivo": "RV_21-1_16",
+        "clave": "A"
+    },
+    {
+        "curso": "RV",
+        "archivo": "RV_21-1_17",
+        "clave": "A"
+    },
+    {
+        "curso": "RV",
+        "archivo": "RV_21-1_18",
+        "clave": "A"
+    },
+    {
+        "curso": "RV",
+        "archivo": "RV_21-1_19",
+        "clave": "A"
+    },
+    {
+        "curso": "RV",
+        "archivo": "RV_21-1_20",
+        "clave": "B"
+    },
+    {
+        "curso": "RV",
+        "archivo": "RV_21-1_21",
+        "clave": "D"
+    },
+    {
+        "curso": "RV",
+        "archivo": "RV_21-1_22",
+        "clave": "D"
+    },
+    {
+        "curso": "RV",
+        "archivo": "RV_21-1_23",
+        "clave": "E"
+    },
+    {
+        "curso": "RV",
+        "archivo": "RV_21-1_24",
+        "clave": "E"
+    },
+    {
+        "curso": "RV",
+        "archivo": "RV_21-1_25",
+        "clave": "A"
+    },
+    {
+        "curso": "Letras",
+        "archivo": "Hum_21-1_26",
+        "clave": "C"
+    },
+    {
+        "curso": "Letras",
+        "archivo": "Hum_21-1_27",
+        "clave": "C"
+    },
+    {
+        "curso": "Letras",
+        "archivo": "Hum_21-1_28",
+        "clave": "B"
+    },
+    {
+        "curso": "Letras",
+        "archivo": "Hum_21-1_29",
+        "clave": "B"
+    },
+    {
+        "curso": "Letras",
+        "archivo": "Hum_21-1_30",
+        "clave": "A"
+    },
+    {
+        "curso": "Letras",
+        "archivo": "Hum_21-1_31",
+        "clave": "B"
+    },
+    {
+        "curso": "Letras",
+        "archivo": "Hum_21-1_32",
+        "clave": "D"
+    },
+    {
+        "curso": "Letras",
+        "archivo": "Hum_21-1_33",
+        "clave": "A"
+    },
+    {
+        "curso": "Letras",
+        "archivo": "Hum_21-1_34",
+        "clave": "C"
+    },
+    {
+        "curso": "Fisica",
+        "archivo": "Fis_21-1_01",
+        "clave": "D"
+    },
+    {
+        "curso": "Fisica",
+        "archivo": "Fis_21-1_02",
+        "clave": "D"
+    },
+    {
+        "curso": "Fisica",
+        "archivo": "Fis_21-1_04",
+        "clave": "C"
+    },
+    {
+        "curso": "Fisica",
+        "archivo": "Fis_21-1_05",
+        "clave": "B"
+    },
+    {
+        "curso": "Fisica",
+        "archivo": "Fis_21-1_07",
+        "clave": "C"
+    },
+    {
+        "curso": "Fisica",
+        "archivo": "Fis_21-1_08",
+        "clave": "B"
+    },
+    {
+        "curso": "Fisica",
+        "archivo": "Fis_21-1_09",
+        "clave": "D"
+    },
+    {
+        "curso": "Fisica",
+        "archivo": "Fis_21-1_10",
+        "clave": "D"
+    },
+    {
+        "curso": "Quimica",
+        "archivo": "Quim_21-1_11",
+        "clave": "C"
+    },
+    {
+        "curso": "Quimica",
+        "archivo": "Quim_21-1_12",
+        "clave": "E"
+    },
+    {
+        "curso": "Quimica",
+        "archivo": "Quim_21-1_13",
+        "clave": "A"
+    },
+    {
+        "curso": "Quimica",
+        "archivo": "Quim_21-1_15",
+        "clave": "E"
+    },
+    {
+        "curso": "Quimica",
+        "archivo": "Quim_21-1_16",
+        "clave": "E"
+    },
+    {
+        "curso": "Quimica",
+        "archivo": "Quim_21-1_17",
+        "clave": "A"
+    },
+    {
+        "curso": "Quimica",
+        "archivo": "Quim_21-1_18",
+        "clave": "E"
+    },
+    {
+        "curso": "Quimica",
+        "archivo": "Quim_21-1_19",
+        "clave": "C"
+    },
+    {
+        "curso": "Quimica",
+        "archivo": "Quim_21-1_20",
+        "clave": "C"
+    },
+    {
+        "curso": "Algebra",
+        "archivo": "Alg_21-1_01",
+        "clave": "E"
+    },
+    {
+        "curso": "Algebra",
+        "archivo": "Alg_21-1_07",
+        "clave": "C"
+    },
+    {
+        "curso": "Algebra",
+        "archivo": "Alg_21-1_08",
+        "clave": "E"
+    },
+    {
+        "curso": "Algebra",
+        "archivo": "Alg_21-1_09",
+        "clave": "A"
+    },
+    {
+        "curso": "Algebra",
+        "archivo": "Alg_21-1_10",
+        "clave": "E"
+    },
+    {
+        "curso": "Aritmetica",
+        "archivo": "Arit_21-1_01",
+        "clave": "C"
+    },
+    {
+        "curso": "Aritmetica",
+        "archivo": "Arit_21-1_02",
+        "clave": "B"
+    },
+    {
+        "curso": "Aritmetica",
+        "archivo": "Arit_21-1_03",
+        "clave": "D"
+    },
+    {
+        "curso": "Aritmetica",
+        "archivo": "Arit_21-1_04",
+        "clave": "B"
+    },
+    {
+        "curso": "Aritmetica",
+        "archivo": "Arit_21-1_05",
+        "clave": "D"
+    },
+    {
+        "curso": "Geometria",
+        "archivo": "Geo_21-1_11",
+        "clave": "B"
+    },
+    {
+        "curso": "Geometria",
+        "archivo": "Geo_21-1_12",
+        "clave": "D"
+    },
+    {
+        "curso": "Geometria",
+        "archivo": "Geo_21-1_13",
+        "clave": "B"
+    },
+    {
+        "curso": "Geometria",
+        "archivo": "Geo_21-1_14",
+        "clave": "B"
+    },
+    {
+        "curso": "Geometria",
+        "archivo": "Geo_21-1_15",
+        "clave": "C"
+    },
+    {
+        "curso": "Trigonometria",
+        "archivo": "Trig_21-1_16",
+        "clave": "A"
+    },
+    {
+        "curso": "Trigonometria",
+        "archivo": "Trig_21-1_17",
+        "clave": "D"
+    },
+    {
+        "curso": "Trigonometria",
+        "archivo": "Trig_21-1_18",
+        "clave": "E"
+    },
+    {
+        "curso": "Trigonometria",
+        "archivo": "Trig_21-1_19",
+        "clave": "D"
+    },
+    {
+        "curso": "Trigonometria",
+        "archivo": "Trig_21-1_20",
+        "clave": "E"
+    }
+]

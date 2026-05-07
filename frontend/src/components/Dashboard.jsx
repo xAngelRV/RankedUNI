@@ -9,8 +9,11 @@ export default function Dashboard({ user, onFindMatch }) {
   const navigate = useNavigate();
 
   const handleStart = () => {
-    if (modality === 'blitz') onFindMatch({ modeId: 'blitz', topic: 'Aptitud Académica' });
-    else if (modality === 'ranked') onFindMatch({ modeId: 'ranked', topic: area });
+    if (modality === 'blitz') onFindMatch({ modeId: 'blitz', topic: 'Humanidades' });
+    else if (modality === 'ranked') {
+      const dbTopic = area === 'Matemática' ? 'Matematicas' : ' Ciencias';
+      onFindMatch({ modeId: 'ranked', topic: dbTopic });
+    }
     else if (modality === 'premium') onFindMatch({ modeId: 'premium', topic: 'IA_Gen' });
     else alert('Simulación General próximamente disponible.');
   };
