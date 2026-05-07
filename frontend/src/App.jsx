@@ -115,6 +115,7 @@ function GameApp({ session }) {
     });
 
     socket.on('match_end', (data) => {
+      console.log("[SOCKET] match_end recibido:", data);
       setMatchData(prev => ({
         ...prev,
         matchWinner: data.winner,
@@ -178,19 +179,26 @@ function GameApp({ session }) {
   };
 
   const handleReturnToDashboard = () => {
-    // Recargar perfil para actualizar ELO
-    fetch(`${import.meta.env.VITE_BACKEND_URL}/api/users/profile/${session.user.id}`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.exists) {
-          setUser({
-            ...data.user,
-            avatar_url: session.user.user_metadata?.avatar_url
-          });
-        }
-      });
-    setAppState('dashboard');
-    setMatchData(null);
+    // Si tenemos un nuevo ELO tras la partida, actualizamos el estado sin recargar la página
+    if (matchData?.myResult?.nuevoElo !== undefined) {
+      setUser(prev => ({ ...prev, elo_rating: matchData.myResult.nuevoElo }));
+      setAppState('dashboard');
+      setMatchData(null);
+    } else {
+      // Recargar perfil como fallback si no hay datos
+      fetch(`${import.meta.env.VITE_BACKEND_URL}/api/users/profile/${session.user.id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.exists) {
+            setUser({
+              ...data.user,
+              avatar_url: session.user.user_metadata?.avatar_url
+            });
+          }
+          setAppState('dashboard');
+          setMatchData(null);
+        });
+    }
   };
 
   if (!user) return <div className="min-h-screen bg-brand-dark flex flex-col items-center justify-center text-white"><div className="w-12 h-12 border-4 border-brand-blue border-t-brand-gold rounded-full animate-spin mb-4"></div><p>Cargando perfil...</p></div>;
@@ -231,7 +239,7 @@ function GameApp({ session }) {
             
             {matchData.mode === 'global' ? (
               <div className="flex flex-col items-center w-full mb-8 mt-2 bg-brand-dark rounded-xl p-6 border border-brand-blue/20">
-                <div className={`text-5xl font-black mb-2 ${matchData.myResult?.eloChange > 0 ? 'text-green-500' : 'text-red-500'}`}>
+                <div className={`text-5xl font-black mb-2 ${matchData.myResult?.eloChange > 0 ? 'text-green-500' : matchData.myResult?.eloChange < 0 ? 'text-red-500' : 'text-gray-400'}`}>
                   {matchData.myResult?.eloChange > 0 ? '+' : ''}{matchData.myResult?.eloChange || 0} ELO
                 </div>
                 <p className="text-gray-300 text-lg italic mb-4">"{matchData.myResult?.reason}"</p>

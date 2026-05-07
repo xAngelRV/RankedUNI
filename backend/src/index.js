@@ -41,20 +41,23 @@ async function processMatchEnd(player1, player2, scoreP1) {
     const eloChange1 = newElo1 - user1.elo_rating;
     const eloChange2 = newElo2 - user2.elo_rating;
 
+    console.log(`[ELO] P1(${user1.username}) ${user1.elo_rating} -> ${newElo1} (Change: ${eloChange1})`);
+    console.log(`[ELO] P2(${user2.username}) ${user2.elo_rating} -> ${newElo2} (Change: ${eloChange2})`);
+
     await prisma.$transaction([
       prisma.user.update({ where: { id: user1.id }, data: { elo_rating: newElo1 } }),
       prisma.user.update({ where: { id: user2.id }, data: { elo_rating: newElo2 } })
     ]);
 
     return {
-      [player1.socketId]: { eloChange: eloChange1 },
-      [player2.socketId]: { eloChange: eloChange2 }
+      [player1.socketId]: { eloChange: eloChange1, nuevoElo: newElo1 },
+      [player2.socketId]: { eloChange: eloChange2, nuevoElo: newElo2 }
     };
   } catch (error) {
     console.error("Error in processMatchEnd:", error);
     return {
-      [player1.socketId]: { eloChange: 0 },
-      [player2.socketId]: { eloChange: 0 }
+      [player1.socketId]: { eloChange: 0, nuevoElo: player1.elo_rating || 0 },
+      [player2.socketId]: { eloChange: 0, nuevoElo: player2.elo_rating || 0 }
     };
   }
 }
