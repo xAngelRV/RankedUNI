@@ -22,6 +22,43 @@ async function generateEditorial(questionUrl, correctAnswer) {
   }
 }
 
+function calculateElo(ratingA, ratingB, actualScoreA) {
+  const K = 32;
+  const expectedScoreA = 1 / (1 + Math.pow(10, (ratingB - ratingA) / 400));
+  return Math.round(ratingA + K * (actualScoreA - expectedScoreA));
+}
+
+async function processMatchEnd(player1, player2, scoreP1) {
+  try {
+    const user1 = await prisma.user.findUnique({ where: { id: player1.id } });
+    const user2 = await prisma.user.findUnique({ where: { id: player2.id } });
+
+    if (!user1 || !user2) throw new Error("Users not found in DB");
+
+    const newElo1 = calculateElo(user1.elo, user2.elo, scoreP1);
+    const newElo2 = calculateElo(user2.elo, user1.elo, 1 - scoreP1);
+
+    const eloChange1 = newElo1 - user1.elo;
+    const eloChange2 = newElo2 - user2.elo;
+
+    await prisma.$transaction([
+      prisma.user.update({ where: { id: user1.id }, data: { elo: newElo1 } }),
+      prisma.user.update({ where: { id: user2.id }, data: { elo: newElo2 } })
+    ]);
+
+    return {
+      [player1.socketId]: { eloChange: eloChange1 },
+      [player2.socketId]: { eloChange: eloChange2 }
+    };
+  } catch (error) {
+    console.error("Error in processMatchEnd:", error);
+    return {
+      [player1.socketId]: { eloChange: 0 },
+      [player2.socketId]: { eloChange: 0 }
+    };
+  }
+}
+
 const app = express();
 app.use(cors({
   origin: ['https://ranked-uni.vercel.app', 'http://localhost:5173'],
@@ -287,16 +324,17 @@ io.on('connection', (socket) => {
         player.score = 1;
         const aiExplanation = await generateEditorial(match.question.imageUrl || match.question.image_url, match.question.correctOption || match.question.correct_answer);
 
+        const dbResults = await processMatchEnd(player, opponent, 1);
+        dbResults[player.socketId].reason = 'Respondiste correctamente primero';
+        dbResults[opponent.socketId].reason = 'Tu oponente respondió correctamente primero';
+
         io.to(roomName).emit('match_end', {
           winner: player.socketId,
           match,
           correctAnswer: match.question.correctOption || match.question.correct_answer,
           timeTaken,
           aiExplanation,
-          results: {
-            [player.socketId]: { eloChange: 15, reason: 'Respondiste correctamente primero' },
-            [opponent.socketId]: { eloChange: -12, reason: 'Tu oponente respondió correctamente primero' }
-          }
+          results: dbResults
         });
         delete activeMatches[roomName];
       } else {
@@ -306,16 +344,17 @@ io.on('connection', (socket) => {
           // Empate
           const aiExplanation = await generateEditorial(match.question.imageUrl || match.question.image_url, match.question.correctOption || match.question.correct_answer);
 
+          const dbResults = await processMatchEnd(player, opponent, 0.5);
+          dbResults[player.socketId].reason = 'Ambos respondieron incorrectamente';
+          dbResults[opponent.socketId].reason = 'Ambos respondieron incorrectamente';
+
           io.to(roomName).emit('match_end', {
             winner: 'tie',
             match,
             correctAnswer: match.question.correctOption || match.question.correct_answer,
             timeTaken,
             aiExplanation,
-            results: {
-              [player.socketId]: { eloChange: 0, reason: 'Ambos respondieron incorrectamente' },
-              [opponent.socketId]: { eloChange: 0, reason: 'Ambos respondieron incorrectamente' }
-            }
+            results: dbResults
           });
           delete activeMatches[roomName];
         } else {
@@ -367,11 +406,20 @@ io.on('connection', (socket) => {
 
           const aiExplanation = await generateEditorial(match.question.imageUrl || match.question.image_url, match.question.correctOption || match.question.correct_answer);
 
+          let scoreP1 = 0.5;
+          if (matchWinner === player.socketId) scoreP1 = 1;
+          else if (matchWinner === opponent.socketId) scoreP1 = 0;
+
+          const dbResults = await processMatchEnd(player, opponent, scoreP1);
+          dbResults[player.socketId].reason = scoreP1 === 1 ? 'Ganaste la partida' : (scoreP1 === 0 ? 'Perdiste la partida' : 'Empate');
+          dbResults[opponent.socketId].reason = scoreP1 === 0 ? 'Ganaste la partida' : (scoreP1 === 1 ? 'Perdiste la partida' : 'Empate');
+
           setTimeout(() => {
             io.to(roomName).emit('match_end', {
               winner: matchWinner,
               match,
-              aiExplanation
+              aiExplanation,
+              results: dbResults
             });
             delete activeMatches[roomName];
           }, 3000);
