@@ -35,15 +35,15 @@ async function processMatchEnd(player1, player2, scoreP1) {
 
     if (!user1 || !user2) throw new Error("Users not found in DB");
 
-    const newElo1 = calculateElo(user1.elo, user2.elo, scoreP1);
-    const newElo2 = calculateElo(user2.elo, user1.elo, 1 - scoreP1);
+    const newElo1 = calculateElo(user1.elo_rating, user2.elo_rating, scoreP1);
+    const newElo2 = calculateElo(user2.elo_rating, user1.elo_rating, 1 - scoreP1);
 
-    const eloChange1 = newElo1 - user1.elo;
-    const eloChange2 = newElo2 - user2.elo;
+    const eloChange1 = newElo1 - user1.elo_rating;
+    const eloChange2 = newElo2 - user2.elo_rating;
 
     await prisma.$transaction([
-      prisma.user.update({ where: { id: user1.id }, data: { elo: newElo1 } }),
-      prisma.user.update({ where: { id: user2.id }, data: { elo: newElo2 } })
+      prisma.user.update({ where: { id: user1.id }, data: { elo_rating: newElo1 } }),
+      prisma.user.update({ where: { id: user2.id }, data: { elo_rating: newElo2 } })
     ]);
 
     return {
