@@ -23,7 +23,11 @@ async function generateEditorial(questionUrl, correctAnswer) {
 }
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: ['https://ranked-uni.vercel.app', 'http://localhost:5173'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+}));
 app.use(express.json());
 
 // --- ENDPOINTS REST ---
@@ -133,8 +137,9 @@ app.put('/api/admin/users/:id/role', async (req, res) => {
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: '*', // TODO: Ajustar para producción
-    methods: ['GET', 'POST']
+    origin: ['https://ranked-uni.vercel.app', 'http://localhost:5173'],
+    methods: ['GET', 'POST'],
+    credentials: true
   }
 });
 
