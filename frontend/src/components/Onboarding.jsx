@@ -38,7 +38,7 @@ export default function Onboarding() {
     const timeoutId = setTimeout(async () => {
       setNicknameStatus('checking');
       try {
-        const res = await fetch(`http://localhost:3001/api/users/check-nickname/${nickname}`);
+        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/users/check-nickname/${nickname}`);
         const data = await res.json();
         setNicknameStatus(data.available ? 'available' : 'taken');
       } catch (err) {
@@ -64,7 +64,7 @@ export default function Onboarding() {
         last_name: lastName
       };
       
-      const res = await fetch('http://localhost:3001/api/users/sync', {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/users/sync`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

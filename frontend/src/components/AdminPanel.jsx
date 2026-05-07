@@ -19,7 +19,7 @@ export default function AdminPanel({ user }) {
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch('http://localhost:3001/api/admin/users');
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/admin/users`);
       const data = await res.json();
       if (data.users) {
         setUsers(data.users);
@@ -33,7 +33,7 @@ export default function AdminPanel({ user }) {
 
   const handleRoleChange = async (userId, newRole) => {
     try {
-      const res = await fetch(`http://localhost:3001/api/admin/users/${userId}/role`, {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/admin/users/${userId}/role`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role: newRole })

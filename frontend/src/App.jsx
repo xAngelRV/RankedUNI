@@ -9,7 +9,8 @@ import AdminPanel from './components/AdminPanel';
 import { supabase } from './supabaseClient';
 import { BrainCircuit } from 'lucide-react';
 
-const socket = io('http://localhost:3001');
+console.log("Conectando al backend en: ", import.meta.env.VITE_BACKEND_URL);
+const socket = io(import.meta.env.VITE_BACKEND_URL, { withCredentials: true });
 
 // PrivateRoute verifica si hay sesión de Supabase
 const PrivateRoute = ({ children }) => {
@@ -45,7 +46,7 @@ function GameApp({ session }) {
   useEffect(() => {
     if (session) {
       // Verificar sincronización
-      fetch(`http://localhost:3001/api/users/profile/${session.user.id}`)
+      fetch(`${import.meta.env.VITE_BACKEND_URL}/api/users/profile/${session.user.id}`)
         .then(res => res.json())
         .then(data => {
           if (!data.exists) {
@@ -178,7 +179,7 @@ function GameApp({ session }) {
 
   const handleReturnToDashboard = () => {
     // Recargar perfil para actualizar ELO
-    fetch(`http://localhost:3001/api/users/profile/${session.user.id}`)
+    fetch(`${import.meta.env.VITE_BACKEND_URL}/api/users/profile/${session.user.id}`)
       .then(res => res.json())
       .then(data => {
         if (data.exists) {
@@ -312,7 +313,7 @@ function AdminApp({ session }) {
 
   useEffect(() => {
     if (session) {
-      fetch(`http://localhost:3001/api/users/profile/${session.user.id}`)
+      fetch(`${import.meta.env.VITE_BACKEND_URL}/api/users/profile/${session.user.id}`)
         .then(res => res.json())
         .then(data => {
           if (!data.exists) {
